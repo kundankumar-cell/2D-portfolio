@@ -8,6 +8,10 @@
     "build": "vite build",
     "preview": "vite preview"
   },
+  "allowScripts": {
+    "esbuild@0.25.12": true,
+    "esbuild": true
+  },
   "dependencies": {
     "@emailjs/browser": "^5.0.3",
     "cors": "^2.8.6",
