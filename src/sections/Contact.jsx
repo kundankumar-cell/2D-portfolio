@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import emailjs from '@emailjs/browser';
 import ShinyText from '../components/ShinyText';
 import { useTheme } from '../hooks/useTheme';
 import { 
@@ -13,24 +12,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { personalInfo } from '../data/portfolioData';
-
-// Helper for strict request timeout to prevent endless loading (15 seconds)
-const withTimeout = (promise, ms = 15000) => {
-  let timer;
-  const timeoutPromise = new Promise((_, reject) => {
-    timer = setTimeout(() => {
-      reject(new Error('REQUEST_TIMEOUT: The email service request timed out.'));
-    }, ms);
-  });
-
-  return Promise.race([
-    promise.then((res) => {
-      clearTimeout(timer);
-      return res;
-    }),
-    timeoutPromise
-  ]);
-};
+import { sendPortfolioEmail } from '../utils/emailService';
 
 export default function Contact({ onOpenContactModal }) {
   const { theme } = useTheme();
@@ -109,54 +91,19 @@ export default function Contact({ onOpenContactModal }) {
     const trimmedEmail = formData.email.trim();
     const trimmedMessage = formData.message.trim();
 
-    // Dynamically retrieve environment variables on submit
-    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID?.trim() || '';
-    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID?.trim() || '';
-    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY?.trim() || '';
-
-    const hasValidConfig = Boolean(
-      serviceId && 
-      templateId && 
-      publicKey &&
-      !serviceId.includes('your_') &&
-      !templateId.includes('your_') &&
-      !publicKey.includes('your_')
-    );
-
     // Immediately disable submit button and activate loading state
     setIsSubmitting(true);
     setStatus('loading');
     setStatusMessage('');
 
-    if (!hasValidConfig) {
-      console.error(
-        '[EmailJS Configuration]: Required environment variables are missing or incomplete. ' +
-        'Please check VITE_EMAILJS_SERVICE_ID, VITE_EMAILJS_TEMPLATE_ID, and VITE_EMAILJS_PUBLIC_KEY in your .env file.'
-      );
-      setIsSubmitting(false);
-      setStatus('error');
-      setStatusMessage('Unable to send your message right now. Please try again.');
-      return;
-    }
-
     try {
-      // Exact EmailJS template parameters matching user's template configuration
-      const templateParams = {
-        from_name: trimmedName,
+      // Execute send request via unified email service
+      await sendPortfolioEmail({
+        name: trimmedName,
+        fromName: trimmedName,
         email: trimmedEmail,
-        reply_to: trimmedEmail,
-        message: trimmedMessage,
-        submission_time: new Date().toLocaleString('en-US', {
-          dateStyle: 'medium',
-          timeStyle: 'short'
-        })
-      };
-
-      // Execute send request with timeout protection (15 seconds)
-      await withTimeout(
-        emailjs.send(serviceId, templateId, templateParams, publicKey),
-        15000
-      );
+        message: trimmedMessage
+      });
 
       // On successful submission: stop loading immediately, show success message, clear form
       setStatus('success');
@@ -172,7 +119,11 @@ export default function Contact({ onOpenContactModal }) {
       console.error('[EmailJS Send Failure]:', err?.text || err?.message || err);
       // On failure or timeout: stop loading immediately, preserve form inputs, show error
       setStatus('error');
-      setStatusMessage('Unable to send your message right now. Please try again.');
+      if (err?.message === 'TIMEOUT_ERROR') {
+        setStatusMessage('Request timed out. Please check your connection and try again.');
+      } else {
+        setStatusMessage('Unable to send your message right now. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }

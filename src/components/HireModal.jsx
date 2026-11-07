@@ -1,25 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import emailjs from '@emailjs/browser';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { personalInfo } from '../data/portfolioData';
-
-// Helper for strict request timeout to prevent endless loading (15 seconds)
-const withTimeout = (promise, ms = 15000) => {
-  let timer;
-  const timeoutPromise = new Promise((_, reject) => {
-    timer = setTimeout(() => {
-      reject(new Error('REQUEST_TIMEOUT: The email service request timed out.'));
-    }, ms);
-  });
-
-  return Promise.race([
-    promise.then((res) => {
-      clearTimeout(timer);
-      return res;
-    }),
-    timeoutPromise
-  ]);
-};
+import { sendPortfolioEmail } from '../utils/emailService';
 
 export default function HireModal({ isOpen, onClose }) {
   const [name, setName] = useState('');
@@ -142,35 +124,10 @@ export default function HireModal({ isOpen, onClose }) {
     const trimmedPhone = phone.trim();
     const trimmedWork = work.trim();
 
-    // Dynamically retrieve environment variables on submit
-    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID?.trim() || '';
-    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID?.trim() || '';
-    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY?.trim() || '';
-
-    const hasValidConfig = Boolean(
-      serviceId && 
-      templateId && 
-      publicKey &&
-      !serviceId.includes('your_') &&
-      !templateId.includes('your_') &&
-      !publicKey.includes('your_')
-    );
-
     // Disable submit button and activate loading state
     setIsSubmitting(true);
     setStatus('loading');
     setStatusMessage('');
-
-    if (!hasValidConfig) {
-      console.error(
-        '[EmailJS Configuration]: Required environment variables are missing or incomplete. ' +
-        'Please check VITE_EMAILJS_SERVICE_ID, VITE_EMAILJS_TEMPLATE_ID, and VITE_EMAILJS_PUBLIC_KEY in your .env file.'
-      );
-      setIsSubmitting(false);
-      setStatus('error');
-      setStatusMessage('Unable to send your message right now. Please try again.');
-      return;
-    }
 
     try {
       // Format message body including phone if provided
@@ -178,26 +135,15 @@ export default function HireModal({ isOpen, onClose }) {
         ? `${trimmedWork}\n\n[Contact Phone: ${trimmedPhone}]`
         : trimmedWork;
 
-      // Exact EmailJS template parameters matching user's template configuration
-      const templateParams = {
-        from_name: trimmedName,
+      // Execute send request via unified email service
+      await sendPortfolioEmail({
+        name: trimmedName,
+        fromName: trimmedName,
         email: trimmedEmail,
-        reply_to: trimmedEmail,
-        phone: trimmedPhone || 'Not provided',
-        message: formattedMessage,
-        to_name: 'Kundan Kumar',
-        recipient_email: personalInfo.email || 'kundanpatel25052003@gmail.com',
-        submission_time: new Date().toLocaleString('en-US', {
-          dateStyle: 'medium',
-          timeStyle: 'short'
-        })
-      };
-
-      // Execute send request with timeout protection (15 seconds)
-      await withTimeout(
-        emailjs.send(serviceId, templateId, templateParams, publicKey),
-        15000
-      );
+        phone: trimmedPhone,
+        subject: 'Hire Me Project Enquiry',
+        message: formattedMessage
+      });
 
       // On successful submission: show success message, clear form
       setStatus('success');
@@ -217,7 +163,11 @@ export default function HireModal({ isOpen, onClose }) {
     } catch (err) {
       console.error('[EmailJS Hire Modal Failure]:', err?.text || err?.message || err);
       setStatus('error');
-      setStatusMessage('Unable to send your message right now. Please try again.');
+      if (err?.message === 'TIMEOUT_ERROR') {
+        setStatusMessage('Request timed out. Please check your connection and try again.');
+      } else {
+        setStatusMessage('Unable to send your message right now. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }

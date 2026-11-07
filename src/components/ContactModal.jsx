@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import emailjs from '@emailjs/browser';
 import { 
   X, 
   Send, 
@@ -10,24 +9,7 @@ import {
   MessageSquare 
 } from 'lucide-react';
 import { personalInfo } from '../data/portfolioData';
-
-// Timeout protection to prevent endless loading spinner
-const withTimeout = (promise, ms = 15000) => {
-  let timer;
-  const timeoutPromise = new Promise((_, reject) => {
-    timer = setTimeout(() => {
-      reject(new Error('REQUEST_TIMEOUT: The email service request timed out.'));
-    }, ms);
-  });
-
-  return Promise.race([
-    promise.then((res) => {
-      clearTimeout(timer);
-      return res;
-    }),
-    timeoutPromise
-  ]);
-};
+import { sendPortfolioEmail } from '../utils/emailService';
 
 export default function ContactModal({ isOpen, onClose, initialSubject = '', isEmbedded = false }) {
   const [formData, setFormData] = useState({
@@ -165,35 +147,10 @@ export default function ContactModal({ isOpen, onClose, initialSubject = '', isE
     const trimmedSubject = formData.subject.trim();
     const trimmedMessage = formData.message.trim();
 
-    // Dynamically retrieve environment variables on submit
-    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID?.trim() || '';
-    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID?.trim() || '';
-    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY?.trim() || '';
-
-    const hasValidConfig = Boolean(
-      serviceId && 
-      templateId && 
-      publicKey &&
-      !serviceId.includes('your_') &&
-      !templateId.includes('your_') &&
-      !publicKey.includes('your_')
-    );
-
     // Disable button & activate loading state
     setIsSubmitting(true);
     setStatus('loading');
     setStatusMessage('');
-
-    if (!hasValidConfig) {
-      console.error(
-        '[EmailJS Configuration]: Required environment variables are missing or incomplete. ' +
-        'Please check VITE_EMAILJS_SERVICE_ID, VITE_EMAILJS_TEMPLATE_ID, and VITE_EMAILJS_PUBLIC_KEY in your .env file.'
-      );
-      setIsSubmitting(false);
-      setStatus('error');
-      setStatusMessage('Unable to send your message right now. Please try again.');
-      return;
-    }
 
     try {
       // Format message body to ensure Subject & Phone are prominent
@@ -204,28 +161,15 @@ export default function ContactModal({ isOpen, onClose, initialSubject = '', isE
         trimmedMessage
       ].filter(Boolean).join('\n\n');
 
-      // Exact EmailJS template parameters matching existing working configuration
-      const templateParams = {
-        from_name: trimmedName,
+      // Send via unified email service
+      await sendPortfolioEmail({
         name: trimmedName,
+        fromName: trimmedName,
         email: trimmedEmail,
-        reply_to: trimmedEmail,
-        phone: trimmedPhone || 'Not provided',
+        phone: trimmedPhone,
         subject: trimmedSubject || 'New Contact Enquiry',
-        message: formattedMessage,
-        to_name: 'Kundan Kumar',
-        recipient_email: personalInfo.email || 'kundanpatel25052003@gmail.com',
-        submission_time: new Date().toLocaleString('en-US', {
-          dateStyle: 'medium',
-          timeStyle: 'short'
-        })
-      };
-
-      // Send via EmailJS with timeout
-      await withTimeout(
-        emailjs.send(serviceId, templateId, templateParams, publicKey),
-        15000
-      );
+        message: formattedMessage
+      });
 
       // Success
       setStatus('success');
@@ -249,7 +193,11 @@ export default function ContactModal({ isOpen, onClose, initialSubject = '', isE
     } catch (err) {
       console.error('[EmailJS Send Failure]:', err?.text || err?.message || err);
       setStatus('error');
-      setStatusMessage('Unable to send your message right now. Please try again.');
+      if (err?.message === 'TIMEOUT_ERROR') {
+        setStatusMessage('Request timed out. Please check your connection and try again.');
+      } else {
+        setStatusMessage('Unable to send your message right now. Please try again.');
+      }
       // Form inputs are preserved
     } finally {
       setIsSubmitting(false);
