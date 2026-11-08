@@ -41,11 +41,28 @@ export default function SkillsDoors({ onOpenContactModal }) {
   // Phase state: 'idle' | 'preview' | 'opening' | 'entering' | 'interior' | 'exiting'
   const [phase, setPhase] = useState('idle');
   const [previewDoorId, setPreviewDoorId] = useState(null);
+  const [openingDoorId, setOpeningDoorId] = useState(null);
   const [activeInteriorId, setActiveInteriorId] = useState(null);
   const [copiedKey, setCopiedKey] = useState(null);
   const [isDoorContactOpen, setIsDoorContactOpen] = useState(false);
   const [doorContactSubject, setDoorContactSubject] = useState('');
   const isTransitioningRef = useRef(false);
+
+  // Track desktop vs mobile viewport (desktop breakpoint: > 980px)
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth <= 980;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 980);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // References for full-screen sequential horizontal gate scroll
   const sectionRef = useRef(null);
@@ -141,6 +158,7 @@ export default function SkillsDoors({ onOpenContactModal }) {
 
     isTransitioningRef.current = true;
     const targetId = id || previewDoorId || 'certifications';
+    setOpeningDoorId(targetId);
     setPreviewDoorId(targetId);
 
     if (prefersReducedMotion) {
@@ -179,6 +197,7 @@ export default function SkillsDoors({ onOpenContactModal }) {
 
     if (prefersReducedMotion) {
       setActiveInteriorId(null);
+      setOpeningDoorId(null);
       setPreviewDoorId(null);
       setPhase('idle');
       isTransitioningRef.current = false;
@@ -191,6 +210,7 @@ export default function SkillsDoors({ onOpenContactModal }) {
     // Step 2: Smoothly close door and restore scene
     const exitTimer = setTimeout(() => {
       setActiveInteriorId(null);
+      setOpeningDoorId(null);
       setPreviewDoorId(null);
       setPhase('idle');
       isTransitioningRef.current = false;
@@ -236,9 +256,11 @@ export default function SkillsDoors({ onOpenContactModal }) {
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  const activeDoorData = previewDoorId ? doorDetails[previewDoorId] : null;
+  const activeTargetId = openingDoorId || previewDoorId || (isMobile ? skillDoors[activeGateIndex]?.id : null);
+  const activeDoorData = previewDoorId ? doorDetails[previewDoorId] : (isMobile ? doorDetails[skillDoors[activeGateIndex]?.id] : null);
   const currentInteriorData = activeInteriorId ? doorDetails[activeInteriorId] : null;
   const previewDoorIndex = skillDoors.findIndex(d => d.id === previewDoorId);
+  const activeTargetIndex = activeTargetId ? skillDoors.findIndex(d => d.id === activeTargetId) : (isMobile ? activeGateIndex : -1);
 
   return (
     <section id="work" className="doors-section" ref={sectionRef}>
@@ -291,34 +313,42 @@ export default function SkillsDoors({ onOpenContactModal }) {
         {/* Main 3D Doors Scene Container */}
         <div 
           className={`doors-stage ${phase !== 'idle' ? `phase-${phase}` : ''} ${activeInteriorId ? 'is-inside' : ''}`}
+          onMouseLeave={handleWallMouseLeave}
           style={{
-            '--target-door-idx': previewDoorIndex >= 0 ? previewDoorIndex : activeGateIndex,
-            '--door-color': previewDoorId ? doorDetails[previewDoorId]?.color || '#ff7a45' : skillDoors[activeGateIndex]?.color || '#ff7a45'
+            '--target-door-idx': activeTargetIndex >= 0 ? activeTargetIndex : (isMobile ? activeGateIndex : 0),
+            '--door-color': activeTargetId ? (doorDetails[activeTargetId]?.color || '#ff7a45') : '#ff7a45'
           }}
         >
           {/* Wall & Doors container / Horizontal Track on mobile */}
           <div 
             ref={trackRef}
             className={`wall doors-horizontal-track ${previewDoorId ? 'wall-has-active' : ''}`}
-            onMouseLeave={handleWallMouseLeave}
           >
             {/* Render 4 Doors */}
             {skillDoors.map((door, index) => {
-              const isHovered = previewDoorId === door.id || activeGateIndex === index;
-              const isOtherDimmed = previewDoorId && previewDoorId !== door.id;
+              const isTargetOpening = (phase === 'opening' || phase === 'entering') && openingDoorId === door.id;
+              const isHovered = isMobile 
+                ? (activeGateIndex === index) 
+                : (openingDoorId ? openingDoorId === door.id : previewDoorId === door.id);
+              const isOtherDimmed = isMobile 
+                ? false 
+                : Boolean(
+                    (openingDoorId && openingDoorId !== door.id) || 
+                    (!openingDoorId && previewDoorId && previewDoorId !== door.id)
+                  );
               const isCert = door.id === 'certifications';
               const doorInfo = doorDetails[door.id];
 
               return (
                 <div key={door.id} className="gate-slide">
                   <div
-                    className={`dr ${isHovered ? 'is-hovered' : ''} ${isOtherDimmed ? 'is-dimmed' : ''} ${isCert ? 'dr-cert' : ''}`}
+                    className={`dr ${isHovered ? 'is-hovered' : ''} ${isOtherDimmed ? 'is-dimmed' : ''} ${isTargetOpening ? 'is-opening' : ''} ${isCert ? 'dr-cert' : ''}`}
                     style={{ '--c': door.color }}
                     tabIndex={0}
                     role="button"
                     aria-label={`${door.title} door. Click to enter.`}
                     aria-expanded={isHovered}
-                    onMouseEnter={() => handleDoorHover(door.id)}
+                    onMouseEnter={() => !isMobile && handleDoorHover(door.id)}
                     onClick={() => handleEnterDoor(door.id)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
@@ -384,7 +414,7 @@ export default function SkillsDoors({ onOpenContactModal }) {
           </div>
 
           {/* Desktop Side Information Preview Panel (Screenshot 2 Match) */}
-          {activeDoorData && (phase === 'preview' || phase === 'opening') && (
+          {activeDoorData && !isMobile && (phase === 'preview' || phase === 'opening') && (
             <div 
               className={`door-preview-panel ${previewDoorIndex >= 2 ? 'panel-left' : 'panel-right'}`}
               role="region"
