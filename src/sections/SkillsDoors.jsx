@@ -227,6 +227,10 @@ export default function SkillsDoors({ onOpenContactModal }) {
           setIsDoorContactOpen(false);
           return;
         }
+        // If certificate full-view lightbox is open, do not exit the room
+        if (document.querySelector('.cert-clean-lightbox, .cert-lightbox-modal')) {
+          return;
+        }
         e.preventDefault();
         handleExitRoom();
       }

@@ -86,6 +86,46 @@ export const certificatesList = [
     issuer: "Campus Crew & Unstop",
     category: "Competitive Quiz & Tech",
     image: "/certificates/06-quizoff-2026-campuscrew-unstop.png"
+  },
+  {
+    id: "deloitte-cyber-2026",
+    number: "07",
+    title: "Deloitte – Cyber Job Simulation 2026",
+    issuer: "Deloitte",
+    category: "Cybersecurity",
+    image: "/certificates/05-deloitte-cyber-job-simulation-2026.png"
+  },
+  {
+    id: "tata-genai-analytics-2026",
+    number: "08",
+    title: "Tata – GenAI Data Analytics Job Simulation 2026",
+    issuer: "Tata Group",
+    category: "AI & Data Analytics",
+    image: "/certificates/06-tata-genai-data-analytics-job-simulation-2026.png"
+  },
+  {
+    id: "oneroadmap-python-2026",
+    number: "09",
+    title: "OneRoadmap – Python Skill Certification 2026",
+    issuer: "OneRoadmap",
+    category: "Python Programming",
+    image: "/certificates/07-oneroadmap-python-skill-certification-2026.png"
+  },
+  {
+    id: "oneroadmap-replit-ai-2026",
+    number: "10",
+    title: "OneRoadmap – Replit AI App Building Masterclass 2026",
+    issuer: "OneRoadmap",
+    category: "AI App Building",
+    image: "/certificates/08-oneroadmap-replit-ai-app-building-masterclass-2026.png"
+  },
+  {
+    id: "oneroadmap-full-stack-2026",
+    number: "11",
+    title: "OneRoadmap – Full Stack Developer 2026",
+    issuer: "OneRoadmap",
+    category: "Full Stack Development",
+    image: "/certificates/09-oneroadmap-full-stack-developer-2026.png"
   }
 ];
 
@@ -121,6 +161,18 @@ export const achievementsList = [
     issuer: "24-Hour National Hackathon",
     category: "National Hackathon",
     image: "/achievements/04-hackindore-4-0-participation.png"
+  },
+  {
+    id: "interncourse-aiml-2026",
+    number: "05",
+    title: "AI & Machine Learning Internship",
+    subtitle: "InternCourse (3-Month Program)",
+    issuer: "InternCourse (3-Month Program)",
+    organization: "InternCourse (3-Month Program)",
+    category: "AI & ML Internship",
+    date: "Aug 2026",
+    certificateId: "IC26/11899",
+    image: "/achievements/InternCourse_Certificate.png"
   }
 ];
 
@@ -202,7 +254,8 @@ export const doorDetails = {
       "SQL for Beginners — Scaler Topics.",
       "Python for Beginners — Simplilearn SkillUp.",
       "Machine Learning — IBM SkillsBuild.",
-      "QuizOff 2026 — India's Biggest AI Quiz, CampusCrew on Unstop."
+      "QuizOff 2026 — India's Biggest AI Quiz, CampusCrew on Unstop.",
+      "Deloitte Cyber Job Simulation 2026 • Tata GenAI Data Analytics 2026 • OneRoadmap Python Certification 2026 • OneRoadmap Replit AI App Building Masterclass 2026 • OneRoadmap Full Stack Developer 2026"
     ],
     credentials: [
       {
@@ -269,8 +322,8 @@ export const doorDetails = {
       },
       {
         label: "GitHub",
-        value: "github.com/kundanpatel25052003",
-        href: "https://github.com/kundanpatel25052003",
+        value: "github.com/kundankumar-cell",
+        href: "https://github.com/kundankumar-cell",
         action: "Explore Repos"
       }
     ]
@@ -660,9 +713,19 @@ export const storyMilestones = [
   },
   {
     year: "2026",
+    period: "May 2026 — Aug 2026",
+    role: "Artificial Intelligence and Machine Learning Intern",
+    organization: "InternCourse",
+    highlights: [
+      "3-Month Internship: Artificial Intelligence and Machine Learning program (02 May 2026 to 02 Aug 2026).",
+      "Certificate ID: IC26/11899."
+    ]
+  },
+  {
+    year: "2026",
     period: "May 2026 — Jul 2026",
     role: "Python – AI & Machine Learning Intern",
-    organization: "Skill Intern",
+    organization: "InternCourse",
     highlights: [
       "3-Month Internship focusing on Python Programming, Artificial Intelligence and Machine Learning.",
       "Applied machine learning models and practical Python engineering."

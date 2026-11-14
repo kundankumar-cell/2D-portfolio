@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { certificatesList } from '../data/portfolioData';
 import { 
   ChevronLeft, 
@@ -24,24 +25,28 @@ export default function CertificateCarousel({ items, certificates, itemLabel = "
     setActiveIndex((prev) => (prev - 1 + total) % total);
   }, [total]);
 
-  // Keyboard navigation
+  // Lightbox keyboard navigation (Escape dismisses, prevents event leaking)
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (inspectingCert) {
-        if (e.key === 'Escape') {
-          setInspectingCert(null);
-        } else if (e.key === 'ArrowRight') {
-          const nextIdx = (dataList.findIndex(c => c.id === inspectingCert.id) + 1) % total;
-          setInspectingCert(dataList[nextIdx]);
-          setActiveIndex(nextIdx);
-        } else if (e.key === 'ArrowLeft') {
-          const prevIdx = (dataList.findIndex(c => c.id === inspectingCert.id) - 1 + total) % total;
-          setInspectingCert(dataList[prevIdx]);
-          setActiveIndex(prevIdx);
-        }
-        return;
-      }
+    if (!inspectingCert) return;
 
+    const handleLightboxKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        setInspectingCert(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleLightboxKeyDown, true);
+    return () => window.removeEventListener('keydown', handleLightboxKeyDown, true);
+  }, [inspectingCert]);
+
+  // Carousel keyboard navigation (when not inspecting)
+  useEffect(() => {
+    if (inspectingCert) return;
+
+    const handleKeyDown = (e) => {
       if (e.key === 'ArrowRight') {
         nextCert();
       } else if (e.key === 'ArrowLeft') {
@@ -51,7 +56,7 @@ export default function CertificateCarousel({ items, certificates, itemLabel = "
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [inspectingCert, dataList, nextCert, prevCert, total]);
+  }, [inspectingCert, nextCert, prevCert]);
 
   // Touch Swipe handlers
   const handleTouchStart = (e) => {
@@ -118,6 +123,16 @@ export default function CertificateCarousel({ items, certificates, itemLabel = "
                     setInspectingCert(cert);
                   } else {
                     setActiveIndex(index);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    if (isCenter) {
+                      setInspectingCert(cert);
+                    } else {
+                      setActiveIndex(index);
+                    }
                   }
                 }}
                 role="button"
@@ -196,65 +211,46 @@ export default function CertificateCarousel({ items, certificates, itemLabel = "
       </div>
 
       {/* ==============================================================
-          LIGHTBOX MODAL: Full-Resolution Inspection View
+          LIGHTBOX MODAL: Minimal, Image-Focused Full-Resolution View
           ============================================================== */}
-      {inspectingCert && (
+      {inspectingCert && createPortal(
         <div 
-          className="cert-lightbox-modal"
+          className="cert-clean-lightbox"
           role="dialog"
           aria-modal="true"
-          aria-label={inspectingCert.title}
-          onClick={(e) => {
-            if (e.target.classList.contains('cert-lightbox-modal')) {
-              setInspectingCert(null);
-            }
-          }}
+          aria-label={inspectingCert.title || "Certificate Full View"}
+          onClick={() => setInspectingCert(null)}
         >
-          <div className="cert-lightbox-backdrop" />
+          {/* Subtle Darkened / Neutral Backdrop */}
+          <div className="cert-clean-lightbox-backdrop" />
 
-          <div className="cert-lightbox-content">
-            {/* Lightbox Topbar */}
-            <div className="cert-lightbox-header">
-              <div className="lightbox-title-wrap">
-                <span className="lightbox-number">{itemLabel} {inspectingCert.number}</span>
-                <h3 className="lightbox-title">{inspectingCert.title}</h3>
-                <span className="lightbox-issuer">{inspectingCert.issuer}</span>
-              </div>
+          {/* Clean Close (X) Button in Top-Right Corner */}
+          <button
+            type="button"
+            className="cert-clean-lightbox-close"
+            onClick={(e) => {
+              e.stopPropagation();
+              setInspectingCert(null);
+            }}
+            aria-label="Close certificate viewer"
+            title="Close (Esc)"
+          >
+            <X size={24} />
+          </button>
 
-              <div className="lightbox-header-actions">
-                <a 
-                  href={inspectingCert.image} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="lightbox-action-btn"
-                  title="Open original image in new tab"
-                >
-                  <ExternalLink size={16} />
-                  <span>Open Full Image</span>
-                </a>
-
-                <button
-                  type="button"
-                  className="lightbox-close-btn"
-                  onClick={() => setInspectingCert(null)}
-                  aria-label="Close certificate inspection view"
-                  title="Close (Esc)"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            </div>
-
-            {/* Lightbox Certificate Image Container (Uncropped, Proportional) */}
-            <div className="cert-lightbox-image-container">
-              <img 
-                src={inspectingCert.image} 
-                alt={inspectingCert.title}
-                className="cert-lightbox-full-img"
-              />
-            </div>
+          {/* Uncropped, Aspect-Preserved, Scaled High-Res Certificate Image */}
+          <div 
+            className="cert-clean-lightbox-image-wrap"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img 
+              src={inspectingCert.image} 
+              alt={inspectingCert.title || "Certificate"}
+              className="cert-clean-lightbox-image"
+            />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
