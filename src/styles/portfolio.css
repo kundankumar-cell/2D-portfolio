@@ -726,7 +726,7 @@ a {
 
 .hero-notebook-wrapper {
   width: 100%;
-  max-width: min(520px, 100%);
+  max-width: min(540px, 100%);
   margin-top: 12px;
   margin-bottom: clamp(18px, 2.4vh, 26px);
 }
@@ -735,7 +735,7 @@ a {
   position: relative;
   width: 100%;
   max-width: 600px;
-  height: clamp(145px, 18vw, 170px);
+  height: clamp(152px, 18vw, 175px);
   perspective: 1200px;
   margin-top: 12px;
 }
@@ -780,9 +780,10 @@ a {
   background: #ffffff;
   border-radius: 22px;
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  justify-content: flex-start;
-  padding: 27px 28px;
+  justify-content: center;
+  padding: 22px 32px 16px;
   transform-origin: top center;
   backface-visibility: hidden;
   transform-style: preserve-3d;
@@ -823,12 +824,13 @@ a {
 
 .notepad-container .role-title {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
-  font-size: clamp(1.5rem, 3.8vw, 2.4rem);
+  font-size: clamp(1.5rem, 3.8vw, 2.35rem);
   font-weight: 800;
   color: #111111;
   letter-spacing: -1.2px;
   line-height: 1.2;
   margin: 0;
+  padding-right: 42px;
   overflow-wrap: anywhere;
 }
 
@@ -845,16 +847,18 @@ a {
 
 @media (max-width: 600px) {
   .notepad-container {
-    height: clamp(135px, 26vw, 155px);
+    height: clamp(140px, 28vw, 160px);
   }
 
   .notepad-container .card {
-    padding: 24px 20px 14px;
+    padding: 18px 22px 14px;
+    justify-content: center;
   }
 
   .notepad-container .role-title {
     font-size: clamp(1.3rem, 5.5vw, 1.8rem);
     letter-spacing: -0.8px;
+    padding-right: 32px;
   }
 
   .notepad-container .counter {
@@ -6590,16 +6594,18 @@ footer {
   }
 
   .notepad-container {
-    height: clamp(125px, 27vw, 145px);
+    height: clamp(132px, 28vw, 152px);
   }
 
   .notepad-container .card {
-    padding: 20px 16px 12px;
+    padding: 16px 18px 12px;
+    justify-content: center;
   }
 
   .notepad-container .role-title {
     font-size: clamp(1.15rem, 5vw, 1.5rem);
     line-height: 1.25;
+    padding-right: 28px;
   }
 
   .portrait-container {

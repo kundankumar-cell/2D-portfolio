@@ -334,7 +334,7 @@ export const doorDetails = {
     tagline: "CAREER JOURNEY & MILESTONES",
     previewPoints: [
       "B.Tech in CS & IT (9.04 CGPA) at IPS Academy (2023–2027)",
-      "Python – AI & ML Intern at Skill Intern (May–Jul 2026)",
+      "Python – AI & ML Intern at InternCourse (May–Jul 2026)",
       "National Hackathons & Innovation: IKIGAI, GSITS & MITS Gwalior",
       "Full Stack Development Intern at Internshala (May–Jun 2025)",
       "Building platforms: EduSure, QualifyAI, OneHealth & Salesforce track"
@@ -354,10 +354,10 @@ export const doorDetails = {
       {
         period: "May 2026 — Jul 2026",
         role: "Python – AI & Machine Learning Intern",
-        organization: "Skill Intern",
+        organization: "InternCourse",
         highlights: [
           "3-Month Internship focusing on Python Programming, Artificial Intelligence and Machine Learning.",
-          "Applied machine learning models, automated data workflows, and practical Python software engineering."
+          "Applied machine learning models and practical Python engineering."
         ]
       },
       {
@@ -719,16 +719,6 @@ export const storyMilestones = [
     highlights: [
       "3-Month Internship: Artificial Intelligence and Machine Learning program (02 May 2026 to 02 Aug 2026).",
       "Certificate ID: IC26/11899."
-    ]
-  },
-  {
-    year: "2026",
-    period: "May 2026 — Jul 2026",
-    role: "Python – AI & Machine Learning Intern",
-    organization: "InternCourse",
-    highlights: [
-      "3-Month Internship focusing on Python Programming, Artificial Intelligence and Machine Learning.",
-      "Applied machine learning models and practical Python engineering."
     ]
   },
   {
