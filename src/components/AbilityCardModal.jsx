@@ -1,9 +1,25 @@
-import React, { useEffect } from 'react';
-import { DarkSoulsHoloCard } from '../shaders/dark-souls-holo-card/DarkSoulsHoloCard';
-import '../shaders/threeui.css';
-import { X, Sparkles } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import Lanyard from './Lanyard';
+import { X } from 'lucide-react';
+import { generateCardTextures } from '../utils/cardTextureGenerator';
+import './Lanyard.css';
 
 export default function AbilityCardModal({ isOpen, onClose }) {
+  const [textures, setTextures] = useState({ front: null, back: null });
+
+  useEffect(() => {
+    let active = true;
+    generateCardTextures('/images/Screenshot 2026-08-12 004208.png').then((res) => {
+      if (active && res) {
+        setTextures(res);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       const originalOverflow = document.body.style.overflow;
@@ -25,42 +41,56 @@ export default function AbilityCardModal({ isOpen, onClose }) {
 
   return (
     <div
-      className="ability-modal-overlay"
+      className="lanyard-modal-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label="Interactive Legendary Developer Holographic Identity Card"
+      aria-label="My ID Card"
       onClick={(e) => {
-        if (e.target.classList.contains('ability-modal-overlay')) {
+        if (
+          e.target.classList.contains('lanyard-modal-overlay') ||
+          e.target.classList.contains('lanyard-modal-backdrop')
+        ) {
           onClose();
         }
       }}
     >
-      <div className="ability-modal-backdrop" />
+      <div className="lanyard-modal-backdrop" onClick={onClose} />
 
-      <div className="ability-modal-content">
-        {/* Close Button */}
+      <div className="lanyard-modal-content">
+        {/* Close Button - View-Only Experience */}
         <button
           type="button"
-          className="ability-modal-close"
+          className="lanyard-modal-close"
           onClick={onClose}
-          aria-label="Close ID Card"
+          aria-label="Close My ID Card"
           title="Close (Esc)"
         >
           <X size={20} />
         </button>
 
-        {/* 3D Holo Card Canvas / Frame */}
-        <div className="ability-card-frame">
-          <DarkSoulsHoloCard variant="cindermane" />
+        {/* Hanging Lanyard Card Stage */}
+        <div className="lanyard-stage-container">
+          <Lanyard
+            frontImage={textures.front}
+            backImage={textures.back}
+            cardColor="#0a1426"
+            strapColor="#070e1c"
+            orientation="portrait"
+            finish="metallic"
+            metal="gold"
+            size={0.78}
+            interactive={true}
+            intro={true}
+          />
         </div>
 
-        {/* Bottom Interactive Hint */}
-        <div className="ability-card-pill">
-          <Sparkles size={14} className="pill-icon" aria-hidden="true" />
-          <span>Click & drag to rotate • Double-click or press F to flip • Hover for foil</span>
+        {/* Minimal interaction instructions at bottom */}
+        <div className="lanyard-hint">
+          <span>Drag to swing</span>
+          <span style={{ opacity: 0.5 }}>•</span>
+          <span>Click to flip card</span>
         </div>
       </div>
     </div>
   );
 }
-
